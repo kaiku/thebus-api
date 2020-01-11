@@ -2,7 +2,7 @@ import cmd
 from time import sleep
 
 from app.services import thebus_service
-from app.settings import SETTINGS
+from app.settings import get_setting
 
 
 class Worker(cmd.Cmd):
@@ -13,7 +13,8 @@ class Worker(cmd.Cmd):
         print(f'Hello, {arg}!')
 
     def do_settings_val(self, arg):
-        print(f'{arg}={SETTINGS[arg]}')
+        value = get_setting(arg, str, '')
+        print(f'{arg}={value}')
 
     def do_get_vehicles(self, arg):
         """Gets vehicle info"""
