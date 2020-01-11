@@ -1,0 +1,10 @@
+# python stuff
+.mypy*
+venv
+venv3
+
+# app stuff
+.env
+
+# editor
+.vscode
