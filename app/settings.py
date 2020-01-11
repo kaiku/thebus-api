@@ -1,4 +1,3 @@
-from collections import defaultdict
 import os
 from typing import Any
 from typing import Dict
