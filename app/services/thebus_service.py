@@ -63,15 +63,14 @@ def normalize_arrivals_response(f):  # type: ignore
             a['headsign'] = str(a['headsign'])
             a['vehicle'] = None if a['vehicle'] == '???' else str(a['vehicle'])
             a['direction'] = str(a['direction'])
-            a['stop_time'] = str(a['stopTime'])
-            a['date'] = str(a['date'])
-            a['stop_datetime'] = get_arrivals_datestr_to_datetime(a['date'], a['stop_time'])
+            a['stop_time'] = get_arrivals_datestr_to_datetime(str(a['date']), str(a['stopTime']))
             a['estimated'] = int(a['estimated'])
             a['longitude'] = float(a['longitude'])
             a['latitude'] = float(a['latitude'])
             a['shape'] = int(a['shape'])
             a['canceled'] = int(a['canceled'])
             del a['stopTime']
+            del a['date']
         return arrivals
     return wrapper
 
