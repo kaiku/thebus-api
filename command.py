@@ -21,6 +21,10 @@ class ServerCommands(cmd.Cmd):
         vehicles = thebus_service.get_vehicles()
         print(f'Found {len(vehicles)} vehicles')
 
+    def do_get_routes(self, arg: str) -> None:
+        routes = thebus_service.get_routes(arg)
+        print(f'Found {len(routes)} routes')
+
     def do_arrivals(self, arg: str) -> None:
         """Get arrival times by stop_id"""
         try:

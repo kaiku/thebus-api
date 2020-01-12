@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<routes>
+    <routeName>2L</routeName>
+    <routeID>132</routeID>
+    <route>
+        <routeNum>2L</routeNum>
+        <shapeID>2L0009</shapeID>
+        <firstStop>KAPIOLANI COMMUNITY COLLEGE (Stop: 4538)</firstStop>
+        <headsign>SCHOOL STREET - Limited Stops</headsign>
+    </route>
+    <route>
+        <routeNum>2L</routeNum>
+        <shapeID>2L0013</shapeID>
+        <firstStop>KALIHI TRANSIT CENTER (Stop: 4523)</firstStop>
+        <headsign>WAIKIKI - Limited Stops</headsign>
+    </route>
+</routes>

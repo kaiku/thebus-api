@@ -4,16 +4,18 @@ from functools import wraps
 from typing import Any
 from typing import Dict
 from typing import List
+from typing import Optional
 
 import requests
 import xmltodict
 
 from app.settings import API_KEY
 from app.settings import TZ
-# from defusedxml import ElementTree
 
 
 ListResponseType = List[Dict[str, Any]]
+
+stop_id_pattern = re.compile(r'\(Stop: (\d+)\)')
 
 
 def normalize_vehicles_response(f):  # type: ignore
@@ -29,8 +31,9 @@ def normalize_vehicles_response(f):  # type: ignore
             v['longitude'] = float(v['longitude'])
             v['adherence'] = int(v['adherence'])
             v['last_message'] = get_vehicles_datestr_to_datetime(v['last_message'])
-            v['route_short_name'] = None if v['route_short_name'] == 'null' else str(v['route_short_name'])
+            v['route'] = None if v['route_short_name'] == 'null' else str(v['route_short_name'])
             v['headsign'] = None if v['headsign'] == 'null' else str(v['headsign'])
+            del v['route_short_name']
         return vehicles
     return wrapper
 
@@ -67,10 +70,11 @@ def normalize_arrivals_response(f):  # type: ignore
             a['estimated'] = int(a['estimated'])
             a['longitude'] = float(a['longitude'])
             a['latitude'] = float(a['latitude'])
-            a['shape'] = int(a['shape'])
+            a['shape_id'] = str(a['shape'])
             a['canceled'] = int(a['canceled'])
             del a['stopTime']
             del a['date']
+            del a['shape']
         return arrivals
     return wrapper
 
@@ -89,6 +93,48 @@ def get_arrivals(stop_id: int) -> ListResponseType:
     stop_times = as_dict['stopTimes']
     arrivals: ListResponseType = stop_times['arrival'] if 'arrival' in stop_times else []
     return arrivals
+
+
+def normalize_routes_response(f):  # type: ignore
+    """Decorator that mutates the routes response by casting values into correct types."""
+    @wraps(f)
+    def wrapper(*args, **kwargs):  # type: ignore
+        routes = f(*args, **kwargs)
+        for r in routes:
+            r['route'] = str(r['routeNum'])
+            r['shape_id'] = str(r['shapeID'])
+            r['first_stop'] = str(r['firstStop'])
+            r['headsign'] = str(r['headsign'])
+            r['stop_id'] = parse_stop_id_from_route(r['first_stop'])
+            del r['routeNum']
+            del r['shapeID']
+            del r['firstStop']
+        return routes
+    return wrapper
+
+
+@normalize_routes_response
+def get_routes(route: str) -> ListResponseType:
+    """
+    Gets route information for a given bus route, e.g. 2L, 60.
+    """
+    resp = requests.get(f'http://api.thebus.org/route/?key={API_KEY}&route={route}')
+    resp.raise_for_status()
+    text = escape_ampersands(resp.text)
+    as_dict = xmltodict.parse(text)
+    outer = as_dict['routes']
+    routes: ListResponseType = outer['route'] if 'route' in outer else []
+    return routes
+
+
+def parse_stop_id_from_route(text: str) -> Optional[int]:
+    """
+    Extracts the stop id from a string like KAPIOLANI COMMUNITY COLLEGE (Stop: 4538)
+    """
+    match = stop_id_pattern.search(text)
+    if match:
+        return int(match.group(1))
+    return None
 
 
 def get_vehicles_datestr_to_datetime(datetime_str: str) -> datetime:
@@ -115,10 +161,3 @@ def escape_ampersands(xml: str) -> str:
         r'&amp;',
         xml,
     )
-
-
-# def get_routes(route: int):
-#     resp = requests.get(f'http://api.thebus.org/route/?key={API_KEY}&route={route}')
-#     root = ElementTree.fromstring(resp.text)
-#     for child in root:
-#         print(child.tag, child.attrib)

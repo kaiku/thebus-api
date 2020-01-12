@@ -8,6 +8,7 @@ from app.settings import ROOT_DIR
 FILES = {
     'vehicles-success': 'tests/data/vehicles-success.xml',
     'arrivals-success': 'tests/data/arrivals-success.xml',
+    'routes-success': 'tests/data/routes-success.xml',
 }
 
 FIXTURES = {}
@@ -25,3 +26,8 @@ def vehicles() -> str:
 @pytest.fixture
 def arrivals() -> str:
     return FIXTURES['arrivals-success']
+
+
+@pytest.fixture
+def routes() -> str:
+    return FIXTURES['routes-success']
