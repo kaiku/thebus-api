@@ -9,6 +9,9 @@ from typing import Optional
 import requests
 import xmltodict
 
+from app.models import Arrival
+from app.models import Route
+from app.models import Vehicle
 from app.settings import API_KEY
 from app.settings import TZ
 
@@ -24,24 +27,23 @@ def normalize_vehicles_response(f):  # type: ignore
     def wrapper(*args, **kwargs):  # type: ignore
         vehicles = f(*args, **kwargs)
         for v in vehicles:
-            v['number'] = str(v['number'])  # e.g. 020 - we might want to preserve leading zero
-            v['trip_id'] = None if v['trip'] == 'null_trip' else int(v['trip'])
-            v['driver_id'] = None if v['driver'] == '0' else int(v['driver'])
-            v['latitude'] = float(v['latitude'])
-            v['longitude'] = float(v['longitude'])
-            v['adherence'] = int(v['adherence'])
-            v['last_message'] = get_vehicles_datestr_to_datetime(v['last_message'])
-            v['route'] = None if v['route_short_name'] == 'null' else str(v['route_short_name'])
-            v['headsign'] = None if v['headsign'] == 'null' else str(v['headsign'])
-            del v['trip']
-            del v['driver']
-            del v['route_short_name']
-            yield v
+            vm = Vehicle(
+                number=str(v['number']),
+                trip_id=None if v['trip'] == 'null_trip' else int(v['trip']),
+                driver_id=None if v['driver'] == '0' else int(v['driver']),
+                latitude=float(v['latitude']),
+                longitude=float(v['longitude']),
+                adherence=int(v['adherence']),
+                last_message=get_vehicles_datestr_to_datetime(v['last_message']),
+                route=None if v['route_short_name'] == 'null' else str(v['route_short_name']),
+                headsign=None if v['headsign'] == 'null' else str(v['headsign']),
+            )
+            yield vm
     return wrapper
 
 
 @normalize_vehicles_response
-def get_vehicles() -> IterableResponseType:
+def get_vehicles() -> Iterable[Vehicle]:
     """
     Gets all vehicle information, or information about a specific vehicle.
 
@@ -56,15 +58,13 @@ def get_vehicles() -> IterableResponseType:
             yield row
 
 
-def get_active_vehicles() -> IterableResponseType:
+def get_active_vehicles() -> Iterable[Vehicle]:
     """
     Get only the vehicles with an active trip.
-
-    TODO: verify that this is the correct way to determine active/inactive.
     """
-    for row in get_vehicles():
-        if row['trip_id'] is not None:
-            yield row
+    for vm in get_vehicles():
+        if vm.is_active():
+            yield vm
 
 
 def normalize_arrivals_response(f):  # type: ignore
@@ -73,28 +73,26 @@ def normalize_arrivals_response(f):  # type: ignore
     def wrapper(*args, **kwargs):  # type: ignore
         arrivals = f(*args, **kwargs)
         for a in arrivals:
-            a['id'] = int(a['id'])
-            a['trip_id'] = int(a['trip'])
-            a['route'] = str(a['route'])
-            a['headsign'] = str(a['headsign'])
-            a['vehicle'] = None if a['vehicle'] == '???' else str(a['vehicle'])
-            a['direction'] = str(a['direction'])
-            a['stop_time'] = get_arrivals_datestr_to_datetime(str(a['date']), str(a['stopTime']))
-            a['estimated'] = int(a['estimated'])
-            a['longitude'] = float(a['longitude'])
-            a['latitude'] = float(a['latitude'])
-            a['shape_id'] = str(a['shape'])
-            a['canceled'] = int(a['canceled'])
-            del a['trip']
-            del a['stopTime']
-            del a['date']
-            del a['shape']
-            yield a
+            am = Arrival(
+                id=int(a['id']),
+                trip_id=int(a['trip']),
+                route=str(a['route']),
+                headsign=str(a['headsign']),
+                vehicle=None if a['vehicle'] == '???' else str(a['vehicle']),
+                direction=str(a['direction']),
+                stop_time=get_arrivals_datestr_to_datetime(str(a['date']), str(a['stopTime'])),
+                estimated=int(a['estimated']),
+                longitude=float(a['longitude']),
+                latitude=float(a['latitude']),
+                shape_id=str(a['shape']),
+                canceled=int(a['canceled']),
+            )
+            yield am
     return wrapper
 
 
 @normalize_arrivals_response
-def get_arrivals(stop_id: int) -> IterableResponseType:
+def get_arrivals(stop_id: int) -> Iterable[Arrival]:
     """
     Gets arrival information for a given stop.
 
@@ -115,20 +113,19 @@ def normalize_routes_response(f):  # type: ignore
     def wrapper(*args, **kwargs):  # type: ignore
         routes = f(*args, **kwargs)
         for r in routes:
-            r['route'] = str(r['routeNum'])
-            r['shape_id'] = str(r['shapeID'])
-            r['first_stop'] = str(r['firstStop'])
-            r['headsign'] = str(r['headsign'])
-            r['stop_id'] = parse_stop_id_from_route(r['first_stop'])
-            del r['routeNum']
-            del r['shapeID']
-            del r['firstStop']
-            yield r
+            rm = Route(
+                route=str(r['routeNum']),
+                shape_id=str(r['shapeID']),
+                first_stop=str(r['firstStop']),
+                headsign=str(r['headsign']),
+                stop_id=parse_stop_id_from_route(r['firstStop']),
+            )
+            yield rm
     return wrapper
 
 
 @normalize_routes_response
-def get_routes(route: str) -> IterableResponseType:
+def get_routes(route: str) -> Iterable[Route]:
     """
     Gets route information for a given bus route, e.g. 2L, 60.
     """

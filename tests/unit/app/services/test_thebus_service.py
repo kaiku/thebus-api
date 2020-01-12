@@ -3,6 +3,7 @@ import re
 import pytest
 import responses
 
+from app.models import Vehicle
 from app.services.thebus_service import get_arrivals
 from app.services.thebus_service import get_arrivals_datestr_to_datetime
 from app.services.thebus_service import get_routes
@@ -16,36 +17,33 @@ ANY_URL = re.compile('.*')
 
 @responses.activate
 @pytest.mark.parametrize('row,expected', [
-    (0, {
-        'number': '020',
-        'trip_id': 2558851,
-        'driver_id': 7828,
-        'latitude': 21.39357,
-        'longitude': -157.7444,
-        'adherence': 0,
-        'last_message': get_vehicles_datestr_to_datetime('1/7/2020 7:05:54 AM'),
-        'route': '671',
-        'headsign': 'KAILUA TOWN',
-    }),
-    (4, {
-        'number': '026',
-        'trip_id': None,
-        'driver_id': None,
-        'latitude': 21.4005346,
-        'longitude': -157.9701914,
-        'adherence': -1,
-        'last_message': get_vehicles_datestr_to_datetime('7/18/2012 3:12:42 PM'),
-        'route': None,
-        'headsign': None,
-    })
+    (0, Vehicle(
+        number='020',
+        trip_id=2558851,
+        driver_id=7828,
+        latitude=21.39357,
+        longitude=-157.7444,
+        adherence=0,
+        last_message=get_vehicles_datestr_to_datetime('1/7/2020 7:05:54 AM'),
+        route='671',
+        headsign='KAILUA TOWN',
+    )),
+    (4, Vehicle(
+        number='026',
+        trip_id=None,
+        driver_id=None,
+        latitude=21.4005346,
+        longitude=-157.9701914,
+        adherence=-1,
+        last_message=get_vehicles_datestr_to_datetime('7/18/2012 3:12:42 PM'),
+        route=None,
+        headsign=None,
+    )),
 ])
 def test_get_vehicles(vehicles, row, expected):
     responses.add(responses.GET, ANY_URL, body=vehicles, status=200)
     resp = list(get_vehicles())
-    vehicle = resp[row]
-    for k, v in expected.items():
-        assert vehicle[k] == v, f'mismatch for `{k}`'
-    assert set(vehicle.keys()) == set(expected.keys())
+    assert expected == resp[row]
 
 
 @responses.activate

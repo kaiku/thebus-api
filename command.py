@@ -1,4 +1,5 @@
 import cmd
+from dataclasses import asdict
 from time import sleep
 
 from tabulate import tabulate
@@ -12,14 +13,14 @@ class ServerCommands(cmd.Cmd):
 
     def do_vehicles(self, arg: str) -> None:
         """Get all vehicle info"""
-        vehicles = list(thebus_service.get_vehicles())
+        vehicles = [asdict(v) for v in thebus_service.get_vehicles()]
         print(f'Found {len(vehicles)} vehicles')
         if len(vehicles):
             print(tabulate(vehicles, headers='keys'))
 
     def do_active_vehicles(self, arg: str) -> None:
         """Get info for active vehicles only"""
-        vehicles = list(thebus_service.get_active_vehicles())
+        vehicles = [asdict(v) for v in thebus_service.get_active_vehicles()]
         print(f'Found {len(vehicles)} active vehicles')
         if len(vehicles):
             print(tabulate(vehicles, headers='keys'))
@@ -29,7 +30,7 @@ class ServerCommands(cmd.Cmd):
             print('Please enter a route')
             return
 
-        routes = list(thebus_service.get_routes(route))
+        routes = [asdict(r) for r in thebus_service.get_routes(route)]
         print(f'Found {len(routes)} routes for route {route}')
         if len(routes):
             print(tabulate(routes, headers='keys'))
@@ -42,7 +43,7 @@ class ServerCommands(cmd.Cmd):
             print('Please enter a valid numeric stop id')
             return
 
-        arrivals = list(thebus_service.get_arrivals(stop_id_int))
+        arrivals = [asdict(a) for a in thebus_service.get_arrivals(stop_id_int)]
         print(f'Found {len(arrivals)} arrivals for stop {stop_id_int}')
         if len(arrivals):
             print(tabulate(arrivals, headers='keys'))
