@@ -3,6 +3,8 @@ import re
 import pytest
 import responses
 
+from app.models import Arrival
+from app.models import Route
 from app.models import Vehicle
 from app.services.thebus_service import get_arrivals
 from app.services.thebus_service import get_arrivals_datestr_to_datetime
@@ -48,47 +50,41 @@ def test_get_vehicles(vehicles, row, expected):
 
 @responses.activate
 @pytest.mark.parametrize('row,expected', [
-    (0, {
-        'id': 1504241264,
-        'trip_id': 2587528,
-        'route': '2',
-        'headsign': 'SCHOOL ST - KALIHI TRANSIT CENTER',
-        'vehicle': '178',
-        'direction': 'Westbound',
-        'stop_time': get_arrivals_datestr_to_datetime('1/11/2020', '11:11 PM'),
-        'estimated': 1,
-        'latitude': 21.3315100,
-        'longitude': -157.8658300,
-        'shape_id': '20160',
-        'canceled': 0,
-    }),
+    (0, Arrival(
+        id=1504241264,
+        trip_id=2587528,
+        route='2',
+        headsign='SCHOOL ST - KALIHI TRANSIT CENTER',
+        vehicle='178',
+        direction='Westbound',
+        stop_time=get_arrivals_datestr_to_datetime('1/11/2020', '11:11 PM'),
+        estimated=1,
+        latitude=21.3315100,
+        longitude=-157.8658300,
+        shape_id='20160',
+        canceled=0,
+    )),
 ])
 def test_get_arrivals(arrivals, row, expected):
     responses.add(responses.GET, ANY_URL, body=arrivals, status=200)
     resp = list(get_arrivals(79))
-    arrival = resp[row]
-    for k, v in expected.items():
-        assert arrival[k] == v, f'mismatch for `{k}`'
-    assert set(arrival.keys()) == set(expected.keys())
+    assert expected == resp[row]
 
 
 @responses.activate
 @pytest.mark.parametrize('row,expected', [
-    (0, {
-        'route': '2L',
-        'shape_id': '2L0009',
-        'first_stop': 'KAPIOLANI COMMUNITY COLLEGE (Stop: 4538)',
-        'headsign': 'SCHOOL STREET - Limited Stops',
-        'stop_id': 4538,
-    }),
+    (0, Route(
+        route='2L',
+        shape_id='2L0009',
+        first_stop='KAPIOLANI COMMUNITY COLLEGE (Stop: 4538)',
+        headsign='SCHOOL STREET - Limited Stops',
+        stop_id=4538,
+    )),
 ])
 def test_get_routes(routes, row, expected):
     responses.add(responses.GET, ANY_URL, body=routes, status=200)
     resp = list(get_routes('2L'))
-    routes = resp[row]
-    for k, v in expected.items():
-        assert routes[k] == v, f'mismatch for `{k}`'
-    assert set(routes.keys()) == set(expected.keys())
+    assert expected == resp[row]
 
 
 @pytest.mark.parametrize('str_in,int_out', [
