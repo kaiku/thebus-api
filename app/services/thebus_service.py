@@ -1,10 +1,10 @@
 import re
+from typing import Dict
 from typing import List
-from typing import OrderedDict
 
-from defusedxml import ElementTree
 import requests
 import xmltodict
+from defusedxml import ElementTree
 
 from app.settings import API_KEY
 
@@ -27,7 +27,7 @@ def get_vehicle(vehicle_num: int = None):
     as_dict = xmltodict.parse(text)
     # breakpoint()
     # xmltodict stores all child <vehicle> tags like this
-    vehicles: List[OrderedDict[str, str]] = as_dict['vehicles']['vehicle']
+    vehicles: List[Dict[str, str]] = as_dict['vehicles']['vehicle']
     # for vehicle in vehicles:
     #     d = dict(vehicle)
     return vehicles
