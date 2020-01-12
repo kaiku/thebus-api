@@ -13,13 +13,7 @@ from app.settings import TZ
 # from defusedxml import ElementTree
 
 
-VehiclesResponseType = List[Dict[str, Any]]
-
-
-def api_datestr_to_datetime(datestr: str) -> datetime:
-    """Converts the API response's date format into a tz-aware datetime."""
-    dt = datetime.strptime(datestr, '%m/%d/%Y %I:%M:%S %p')
-    return dt.replace(tzinfo=TZ)
+ListResponseType = List[Dict[str, Any]]
 
 
 def normalize_vehicles_response(f):  # type: ignore
@@ -34,7 +28,7 @@ def normalize_vehicles_response(f):  # type: ignore
             v['latitude'] = float(v['latitude'])
             v['longitude'] = float(v['longitude'])
             v['adherence'] = int(v['adherence'])
-            v['last_message'] = api_datestr_to_datetime(v['last_message'])
+            v['last_message'] = get_vehicles_datestr_to_datetime(v['last_message'])
             v['route_short_name'] = None if v['route_short_name'] == 'null' else str(v['route_short_name'])
             v['headsign'] = None if v['headsign'] == 'null' else str(v['headsign'])
         return vehicles
@@ -42,7 +36,7 @@ def normalize_vehicles_response(f):  # type: ignore
 
 
 @normalize_vehicles_response
-def get_vehicles() -> VehiclesResponseType:
+def get_vehicles() -> ListResponseType:
     """
     Gets all vehicle information, or information about a specific vehicle.
 
@@ -53,8 +47,60 @@ def get_vehicles() -> VehiclesResponseType:
     text = escape_ampersands(resp.text)
     as_dict = xmltodict.parse(text)
     # xmltodict stores all child <vehicle> tags like this
-    vehicles: VehiclesResponseType = as_dict['vehicles']['vehicle']
+    vehicles: ListResponseType = as_dict['vehicles']['vehicle']
     return vehicles
+
+
+def normalize_arrivals_response(f):  # type: ignore
+    """Decorator that mutates the arrivals response by casting values into correct types."""
+    @wraps(f)
+    def wrapper(*args, **kwargs):  # type: ignore
+        arrivals = f(*args, **kwargs)
+        for a in arrivals:
+            a['id'] = int(a['id'])
+            a['trip'] = int(a['trip'])
+            a['route'] = str(a['route'])
+            a['headsign'] = str(a['headsign'])
+            a['vehicle'] = None if a['vehicle'] == '???' else str(a['vehicle'])
+            a['direction'] = str(a['direction'])
+            a['stop_time'] = str(a['stopTime'])
+            a['date'] = str(a['date'])
+            a['stop_datetime'] = get_arrivals_datestr_to_datetime(a['date'], a['stop_time'])
+            a['estimated'] = int(a['estimated'])
+            a['longitude'] = float(a['longitude'])
+            a['latitude'] = float(a['latitude'])
+            a['shape'] = int(a['shape'])
+            a['canceled'] = int(a['canceled'])
+            del a['stopTime']
+        return arrivals
+    return wrapper
+
+
+@normalize_arrivals_response
+def get_arrivals(stop_id: int) -> ListResponseType:
+    """
+    Gets arrival information for a given stop.
+
+    Raises a requests.HTTPError on non-2xx response.
+    """
+    resp = requests.get(f'http://api.thebus.org/arrivals/?key={API_KEY}&stop={stop_id}')
+    resp.raise_for_status()
+    text = escape_ampersands(resp.text)
+    as_dict = xmltodict.parse(text)
+    arrivals: ListResponseType = as_dict['stopTimes']['arrival']
+    return arrivals
+
+
+def get_vehicles_datestr_to_datetime(datetime_str: str) -> datetime:
+    """Converts the API response's date format into a tz-aware datetime."""
+    dt = datetime.strptime(datetime_str, '%m/%d/%Y %I:%M:%S %p')
+    return dt.replace(tzinfo=TZ)
+
+
+def get_arrivals_datestr_to_datetime(date_str: str, time_str: str) -> datetime:
+    """Converts the API response's date format into a tz-aware datetime."""
+    dt = datetime.strptime(f'{date_str} {time_str}', '%m/%d/%Y %I:%M %p')
+    return dt.replace(tzinfo=TZ)
 
 
 def escape_ampersands(xml: str) -> str:
