@@ -87,7 +87,8 @@ def get_arrivals(stop_id: int) -> ListResponseType:
     resp.raise_for_status()
     text = escape_ampersands(resp.text)
     as_dict = xmltodict.parse(text)
-    arrivals: ListResponseType = as_dict['stopTimes']['arrival']
+    stop_times = as_dict['stopTimes']
+    arrivals: ListResponseType = stop_times['arrival'] if 'arrival' in stop_times else []
     return arrivals
 
 
