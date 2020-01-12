@@ -9,19 +9,19 @@ class Worker(cmd.Cmd):
     """Fetches TheBus API data and loads it into Redis"""
     prompt = '(server) '
 
-    def do_hello(self, arg):
+    def do_hello(self, arg: str) -> None:
         print(f'Hello, {arg}!')
 
-    def do_settings_val(self, arg):
+    def do_settings_val(self, arg: str) -> None:
         value = get_setting(arg, str, '')
         print(f'{arg}={value}')
 
-    def do_get_vehicles(self, arg):
+    def do_get_vehicles(self, arg: str) -> None:
         """Gets vehicle info"""
         vehicles = thebus_service.get_vehicle()
         print(f'Found {len(vehicles)} vehicles')
 
-    def do_combined(self, arg):
+    def do_combined(self, arg: str) -> None:
         self.cmdqueue.extend([
             'hello a',
             'hello b',
@@ -29,7 +29,7 @@ class Worker(cmd.Cmd):
             'hello c',
         ])
 
-    def do_delay(self, arg: str):
+    def do_delay(self, arg: str) -> None:
         try:
             seconds = float(arg)
             print(f'Sleeping {seconds}s...')

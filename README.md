@@ -22,3 +22,7 @@ Create a .env file containing your API key in the format:
 ```
 API_KEY=57CT...
 ```
+
+## Testing
+
+Run `python -m pytest` to run all tests.
