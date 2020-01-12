@@ -25,14 +25,16 @@ def normalize_vehicles_response(f):  # type: ignore
         vehicles = f(*args, **kwargs)
         for v in vehicles:
             v['number'] = str(v['number'])  # e.g. 020 - we might want to preserve leading zero
-            v['trip'] = None if v['trip'] == 'null_trip' else int(v['trip'])
-            v['driver'] = int(v['driver'])
+            v['trip_id'] = None if v['trip'] == 'null_trip' else int(v['trip'])
+            v['driver_id'] = None if v['driver'] == '0' else int(v['driver'])
             v['latitude'] = float(v['latitude'])
             v['longitude'] = float(v['longitude'])
             v['adherence'] = int(v['adherence'])
             v['last_message'] = get_vehicles_datestr_to_datetime(v['last_message'])
             v['route'] = None if v['route_short_name'] == 'null' else str(v['route_short_name'])
             v['headsign'] = None if v['headsign'] == 'null' else str(v['headsign'])
+            del v['trip']
+            del v['driver']
             del v['route_short_name']
             yield v
     return wrapper
@@ -61,7 +63,7 @@ def get_active_vehicles() -> IterableResponseType:
     TODO: verify that this is the correct way to determine active/inactive.
     """
     for row in get_vehicles():
-        if row['trip'] is not None:
+        if row['trip_id'] is not None:
             yield row
 
 
@@ -72,7 +74,7 @@ def normalize_arrivals_response(f):  # type: ignore
         arrivals = f(*args, **kwargs)
         for a in arrivals:
             a['id'] = int(a['id'])
-            a['trip'] = int(a['trip'])
+            a['trip_id'] = int(a['trip'])
             a['route'] = str(a['route'])
             a['headsign'] = str(a['headsign'])
             a['vehicle'] = None if a['vehicle'] == '???' else str(a['vehicle'])
@@ -83,6 +85,7 @@ def normalize_arrivals_response(f):  # type: ignore
             a['latitude'] = float(a['latitude'])
             a['shape_id'] = str(a['shape'])
             a['canceled'] = int(a['canceled'])
+            del a['trip']
             del a['stopTime']
             del a['date']
             del a['shape']

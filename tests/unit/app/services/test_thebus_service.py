@@ -18,8 +18,8 @@ ANY_URL = re.compile('.*')
 @pytest.mark.parametrize('row,expected', [
     (0, {
         'number': '020',
-        'trip': 2558851,
-        'driver': 7828,
+        'trip_id': 2558851,
+        'driver_id': 7828,
         'latitude': 21.39357,
         'longitude': -157.7444,
         'adherence': 0,
@@ -29,8 +29,8 @@ ANY_URL = re.compile('.*')
     }),
     (4, {
         'number': '026',
-        'trip': None,
-        'driver': 0,
+        'trip_id': None,
+        'driver_id': None,
         'latitude': 21.4005346,
         'longitude': -157.9701914,
         'adherence': -1,
@@ -52,7 +52,7 @@ def test_get_vehicles(vehicles, row, expected):
 @pytest.mark.parametrize('row,expected', [
     (0, {
         'id': 1504241264,
-        'trip': 2587528,
+        'trip_id': 2587528,
         'route': '2',
         'headsign': 'SCHOOL ST - KALIHI TRANSIT CENTER',
         'vehicle': '178',
