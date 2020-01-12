@@ -1,6 +1,10 @@
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
+
+
+stop_id_pattern = re.compile(r'\(Stop: (\d+)\)')
 
 
 @dataclass
@@ -25,7 +29,14 @@ class Route:
     shape_id: str
     first_stop: str
     headsign: str
-    stop_id: Optional[int]
+
+    @property
+    def first_stop_id(self) -> Optional[int]:
+        """Extracts the stop id from the first stop string"""
+        match = stop_id_pattern.search(self.first_stop)
+        if match:
+            return int(match.group(1))
+        return None
 
 
 @dataclass

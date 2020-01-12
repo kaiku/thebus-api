@@ -11,7 +11,6 @@ from app.services.thebus_service import get_arrivals_datestr_to_datetime
 from app.services.thebus_service import get_routes
 from app.services.thebus_service import get_vehicles
 from app.services.thebus_service import get_vehicles_datestr_to_datetime
-from app.services.thebus_service import parse_stop_id_from_route
 
 
 ANY_URL = re.compile('.*')
@@ -72,26 +71,17 @@ def test_get_arrivals(arrivals, row, expected):
 
 
 @responses.activate
-@pytest.mark.parametrize('row,expected', [
+@pytest.mark.parametrize('row,expected,extracted_stop_id', [
     (0, Route(
         route='2L',
         shape_id='2L0009',
         first_stop='KAPIOLANI COMMUNITY COLLEGE (Stop: 4538)',
         headsign='SCHOOL STREET - Limited Stops',
-        stop_id=4538,
-    )),
+    ), 4538),
 ])
-def test_get_routes(routes, row, expected):
+def test_get_routes(routes, row, expected, extracted_stop_id):
     responses.add(responses.GET, ANY_URL, body=routes, status=200)
     resp = list(get_routes('2L'))
-    assert expected == resp[row]
-
-
-@pytest.mark.parametrize('str_in,int_out', [
-    ('KALIHI TRANSIT CENTER (Stop: 4523)', 4523),
-    ('(Stop: 5) foo', 5),
-    ('bar', None),
-    ('', None),
-])
-def test_parse_stop_id_from_route(str_in, int_out):
-    assert parse_stop_id_from_route(str_in) == int_out
+    rm = resp[row]
+    assert expected == rm
+    # assert

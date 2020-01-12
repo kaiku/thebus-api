@@ -4,7 +4,6 @@ from functools import wraps
 from typing import Any
 from typing import Dict
 from typing import Iterable
-from typing import Optional
 
 import requests
 import xmltodict
@@ -17,8 +16,6 @@ from app.settings import TZ
 
 
 IterableResponseType = Iterable[Dict[str, Any]]
-
-stop_id_pattern = re.compile(r'\(Stop: (\d+)\)')
 
 
 def normalize_vehicles_response(f):  # type: ignore
@@ -118,7 +115,6 @@ def normalize_routes_response(f):  # type: ignore
                 shape_id=str(r['shapeID']),
                 first_stop=str(r['firstStop']),
                 headsign=str(r['headsign']),
-                stop_id=parse_stop_id_from_route(r['firstStop']),
             )
             yield rm
     return wrapper
@@ -136,16 +132,6 @@ def get_routes(route: str) -> Iterable[Route]:
     if 'route' in as_dict['routes']:
         for row in as_dict['routes']['route']:
             yield row
-
-
-def parse_stop_id_from_route(text: str) -> Optional[int]:
-    """
-    Extracts the stop id from a string like KAPIOLANI COMMUNITY COLLEGE (Stop: 4538)
-    """
-    match = stop_id_pattern.search(text)
-    if match:
-        return int(match.group(1))
-    return None
 
 
 def get_vehicles_datestr_to_datetime(datetime_str: str) -> datetime:
