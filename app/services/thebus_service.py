@@ -1,4 +1,3 @@
-from collections import defaultdict
 import re
 from typing import List
 from typing import OrderedDict
@@ -22,15 +21,15 @@ def fix_ampersands(xml_text: str) -> str:
 
 def get_vehicle(vehicle_num: int = None):
     """Gets all vehicle information, or information about a specific vehicle."""
-    #resp = requests.get(f'http://api.thebus.org/vehicle/?key={API_KEY}&vehicle_num={vehicle}')
+    # http://api.thebus.org/vehicle/?key={API_KEY}&vehicle_num={vehicle}
     resp = requests.get(f'http://api.thebus.org/vehicle/?key={API_KEY}')
     text = fix_ampersands(resp.text)
     as_dict = xmltodict.parse(text)
     # breakpoint()
     # xmltodict stores all child <vehicle> tags like this
     vehicles: List[OrderedDict[str, str]] = as_dict['vehicles']['vehicle']
-    for vehicle in vehicles:
-        d = dict(vehicle)
+    # for vehicle in vehicles:
+    #     d = dict(vehicle)
     return vehicles
 
 
