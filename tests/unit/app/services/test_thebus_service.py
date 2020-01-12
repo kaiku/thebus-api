@@ -41,7 +41,7 @@ ANY_URL = re.compile('.*')
 ])
 def test_get_vehicles(vehicles, row, expected):
     responses.add(responses.GET, ANY_URL, body=vehicles, status=200)
-    resp = get_vehicles()
+    resp = list(get_vehicles())
     vehicle = resp[row]
     for k, v in expected.items():
         assert vehicle[k] == v, f'mismatch for `{k}`'
@@ -67,7 +67,7 @@ def test_get_vehicles(vehicles, row, expected):
 ])
 def test_get_arrivals(arrivals, row, expected):
     responses.add(responses.GET, ANY_URL, body=arrivals, status=200)
-    resp = get_arrivals(79)
+    resp = list(get_arrivals(79))
     arrival = resp[row]
     for k, v in expected.items():
         assert arrival[k] == v, f'mismatch for `{k}`'
@@ -86,7 +86,7 @@ def test_get_arrivals(arrivals, row, expected):
 ])
 def test_get_routes(routes, row, expected):
     responses.add(responses.GET, ANY_URL, body=routes, status=200)
-    resp = get_routes('2L')
+    resp = list(get_routes('2L'))
     routes = resp[row]
     for k, v in expected.items():
         assert routes[k] == v, f'mismatch for `{k}`'

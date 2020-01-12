@@ -3,7 +3,7 @@ from datetime import datetime
 from functools import wraps
 from typing import Any
 from typing import Dict
-from typing import List
+from typing import Iterable
 from typing import Optional
 
 import requests
@@ -13,7 +13,7 @@ from app.settings import API_KEY
 from app.settings import TZ
 
 
-ListResponseType = List[Dict[str, Any]]
+IterableResponseType = Iterable[Dict[str, Any]]
 
 stop_id_pattern = re.compile(r'\(Stop: (\d+)\)')
 
@@ -34,12 +34,12 @@ def normalize_vehicles_response(f):  # type: ignore
             v['route'] = None if v['route_short_name'] == 'null' else str(v['route_short_name'])
             v['headsign'] = None if v['headsign'] == 'null' else str(v['headsign'])
             del v['route_short_name']
-        return vehicles
+            yield v
     return wrapper
 
 
 @normalize_vehicles_response
-def get_vehicles() -> ListResponseType:
+def get_vehicles() -> IterableResponseType:
     """
     Gets all vehicle information, or information about a specific vehicle.
 
@@ -49,9 +49,20 @@ def get_vehicles() -> ListResponseType:
     resp.raise_for_status()
     text = escape_ampersands(resp.text)
     as_dict = xmltodict.parse(text)
-    # xmltodict stores all child <vehicle> tags like this
-    vehicles: ListResponseType = as_dict['vehicles']['vehicle']
-    return vehicles
+    if 'vehicle' in as_dict['vehicles']:
+        for row in as_dict['vehicles']['vehicle']:
+            yield row
+
+
+def get_active_vehicles() -> IterableResponseType:
+    """
+    Get only the vehicles with an active trip.
+
+    TODO: verify that this is the correct way to determine active/inactive.
+    """
+    for row in get_vehicles():
+        if row['trip'] is not None:
+            yield row
 
 
 def normalize_arrivals_response(f):  # type: ignore
@@ -75,12 +86,12 @@ def normalize_arrivals_response(f):  # type: ignore
             del a['stopTime']
             del a['date']
             del a['shape']
-        return arrivals
+            yield a
     return wrapper
 
 
 @normalize_arrivals_response
-def get_arrivals(stop_id: int) -> ListResponseType:
+def get_arrivals(stop_id: int) -> IterableResponseType:
     """
     Gets arrival information for a given stop.
 
@@ -90,9 +101,9 @@ def get_arrivals(stop_id: int) -> ListResponseType:
     resp.raise_for_status()
     text = escape_ampersands(resp.text)
     as_dict = xmltodict.parse(text)
-    stop_times = as_dict['stopTimes']
-    arrivals: ListResponseType = stop_times['arrival'] if 'arrival' in stop_times else []
-    return arrivals
+    if 'arrival' in as_dict['stopTimes']:
+        for row in as_dict['stopTimes']['arrival']:
+            yield row
 
 
 def normalize_routes_response(f):  # type: ignore
@@ -109,12 +120,12 @@ def normalize_routes_response(f):  # type: ignore
             del r['routeNum']
             del r['shapeID']
             del r['firstStop']
-        return routes
+            yield r
     return wrapper
 
 
 @normalize_routes_response
-def get_routes(route: str) -> ListResponseType:
+def get_routes(route: str) -> IterableResponseType:
     """
     Gets route information for a given bus route, e.g. 2L, 60.
     """
@@ -122,9 +133,9 @@ def get_routes(route: str) -> ListResponseType:
     resp.raise_for_status()
     text = escape_ampersands(resp.text)
     as_dict = xmltodict.parse(text)
-    outer = as_dict['routes']
-    routes: ListResponseType = outer['route'] if 'route' in outer else []
-    return routes
+    if 'route' in as_dict['routes']:
+        for row in as_dict['routes']['route']:
+            yield row
 
 
 def parse_stop_id_from_route(text: str) -> Optional[int]:
