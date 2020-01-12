@@ -8,6 +8,8 @@ from app.services.thebus_service import get_arrivals_datestr_to_datetime
 from app.services.thebus_service import get_routes
 from app.services.thebus_service import get_vehicles
 from app.services.thebus_service import get_vehicles_datestr_to_datetime
+from app.services.thebus_service import parse_stop_id_from_route
+
 
 ANY_URL = re.compile('.*')
 
@@ -89,3 +91,13 @@ def test_get_routes(routes, row, expected):
     for k, v in expected.items():
         assert routes[k] == v, f'mismatch for `{k}`'
     assert set(routes.keys()) == set(expected.keys())
+
+
+@pytest.mark.parametrize('str_in,int_out', [
+    ('KALIHI TRANSIT CENTER (Stop: 4523)', 4523),
+    ('(Stop: 5) foo', 5),
+    ('bar', None),
+    ('', None),
+])
+def test_parse_stop_id_from_route(str_in, int_out):
+    assert parse_stop_id_from_route(str_in) == int_out
