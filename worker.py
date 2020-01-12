@@ -18,7 +18,7 @@ class Worker(cmd.Cmd):
 
     def do_get_vehicles(self, arg: str) -> None:
         """Gets vehicle info"""
-        vehicles = thebus_service.get_vehicle()
+        vehicles = thebus_service.get_vehicles()
         print(f'Found {len(vehicles)} vehicles')
 
     def do_combined(self, arg: str) -> None:
