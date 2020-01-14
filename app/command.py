@@ -1,7 +1,7 @@
 import cmd
-from dataclasses import asdict
 from time import sleep
 
+from attr import asdict
 from tabulate import tabulate
 
 from app.services import thebus_service

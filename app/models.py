@@ -1,13 +1,14 @@
 import re
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
+
+from attr import attrs
 
 
 stop_id_pattern = re.compile(r'\(Stop: (\d+)\)')
 
 
-@dataclass
+@attrs(auto_attribs=True)
 class Arrival:
     id: int
     trip_id: int
@@ -23,7 +24,7 @@ class Arrival:
     canceled: int
 
 
-@dataclass
+@attrs(auto_attribs=True)
 class Route:
     route: str
     shape_id: str
@@ -39,7 +40,7 @@ class Route:
         return None
 
 
-@dataclass
+@attrs(auto_attribs=True)
 class Vehicle:
     number: str  # vehicle number, e.g. 020 (may have leading zeroes)
     trip_id: Optional[int]

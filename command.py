@@ -7,4 +7,7 @@ from app.command import ServerCommands
 
 
 if __name__ == '__main__':
-    ServerCommands().cmdloop()
+    try:
+        ServerCommands().cmdloop()
+    except KeyboardInterrupt:
+        print('\nBye!')
