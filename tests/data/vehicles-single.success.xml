@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<vehicles>
+<timestamp>1/7/2020 7:06:48 AM</timestamp>
+<vehicle><number>020</number><trip>2558851</trip><driver>7828</driver><latitude>21.39357</latitude><longitude>-157.7444</longitude><adherence>0</adherence><last_message>1/7/2020 7:05:54 AM</last_message><route_short_name>671</route_short_name><headsign>KAILUA TOWN</headsign></vehicle>
+</vehicles>

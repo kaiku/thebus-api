@@ -4,6 +4,8 @@ from functools import wraps
 from typing import Any
 from typing import Dict
 from typing import Iterable
+from typing import Optional
+from xml.parsers.expat import ExpatError
 
 import requests
 import xmltodict
@@ -40,27 +42,38 @@ def normalize_vehicles_response(f):  # type: ignore
 
 
 @normalize_vehicles_response
-def get_vehicles() -> Iterable[Vehicle]:
+def get_vehicles(number: Optional[str] = None) -> Iterable[Vehicle]:
     """
     Gets all vehicle information, or information about a specific vehicle.
 
     Raises a requests.HTTPError on non-2xx response.
     """
-    resp = requests.get(f'http://api.thebus.org/vehicle/?key={API_KEY}')
+    query = {'key': API_KEY}
+    if number is not None:
+        query['num'] = number
+    resp = requests.get(f'http://api.thebus.org/vehicle/?{build_query_str(query)}')
     resp.raise_for_status()
-    text = escape_ampersands(resp.text)
-    as_dict = xmltodict.parse(text)
+    as_dict = parse_xml(resp.text)
     if 'vehicle' in as_dict['vehicles']:
-        for row in as_dict['vehicles']['vehicle']:
+        # multiple vehicle elements will be stored in a list, otherwise an ordered dict
+        nested = as_dict['vehicles']['vehicle']
+        rows = nested if type(nested) == list else [nested]
+        for row in rows:
             yield row
 
 
-def get_active_vehicles() -> Iterable[Vehicle]:
+def get_active_vehicles(number: Optional[str] = None) -> Iterable[Vehicle]:
     """
     Get only the vehicles with an active trip.
     """
-    for vm in get_vehicles():
+    for vm in get_vehicles(number):
         if vm.is_active():
+            yield vm
+
+
+def get_active_vehicles_by_route(route: str) -> Iterable[Vehicle]:
+    for vm in get_active_vehicles():
+        if vm.route == route:
             yield vm
 
 
@@ -97,8 +110,7 @@ def get_arrivals(stop_id: int) -> Iterable[Arrival]:
     """
     resp = requests.get(f'http://api.thebus.org/arrivals/?key={API_KEY}&stop={stop_id}')
     resp.raise_for_status()
-    text = escape_ampersands(resp.text)
-    as_dict = xmltodict.parse(text)
+    as_dict = parse_xml(resp.text)
     if 'arrival' in as_dict['stopTimes']:
         for row in as_dict['stopTimes']['arrival']:
             yield row
@@ -127,8 +139,7 @@ def get_routes(route: str) -> Iterable[Route]:
     """
     resp = requests.get(f'http://api.thebus.org/route/?key={API_KEY}&route={route}')
     resp.raise_for_status()
-    text = escape_ampersands(resp.text)
-    as_dict = xmltodict.parse(text)
+    as_dict = parse_xml(resp.text)
     if 'route' in as_dict['routes']:
         for row in as_dict['routes']['route']:
             yield row
@@ -146,7 +157,18 @@ def get_arrivals_datestr_to_datetime(date_str: str, time_str: str) -> datetime:
     return dt.replace(tzinfo=TZ)
 
 
-def escape_ampersands(xml: str) -> str:
+def parse_xml(xmldata: str) -> Dict[str, Any]:
+    try:
+        xmldata = escape_ampersands(xmldata)
+        as_dict = xmltodict.parse(xmldata)
+        return as_dict
+    except ExpatError:
+        print('Invalid XML:')
+        print(xmldata)
+        raise
+
+
+def escape_ampersands(xmldata: str) -> str:
     """
     Escapes unescaped ampersands in a string of XML.
 
@@ -156,5 +178,9 @@ def escape_ampersands(xml: str) -> str:
     return re.sub(
         r'&(?![A-Za-z]+[0-9]*;|#[0-9]+;|#x[0-9a-fA-F]+;)',
         r'&amp;',
-        xml,
+        xmldata,
     )
+
+
+def build_query_str(data: Dict[str, Any]) -> str:
+    return '&'.join({f'{k}={v}' for k, v in data.items()})

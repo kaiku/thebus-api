@@ -41,10 +41,31 @@ ANY_URL = re.compile('.*')
         headsign=None,
     )),
 ])
-def test_get_vehicles(vehicles, row, expected):
-    responses.add(responses.GET, ANY_URL, body=vehicles, status=200)
+def test_get_vehicles(vehicles_multiple, row, expected):
+    responses.add(responses.GET, ANY_URL, body=vehicles_multiple, status=200)
     resp = list(get_vehicles())
     assert expected == resp[row]
+
+
+@responses.activate
+@pytest.mark.parametrize('expected', [
+    Vehicle(
+        number='020',
+        trip_id=2558851,
+        driver_id=7828,
+        latitude=21.39357,
+        longitude=-157.7444,
+        adherence=0,
+        last_message=get_vehicles_datestr_to_datetime('1/7/2020 7:05:54 AM'),
+        route='671',
+        headsign='KAILUA TOWN',
+    ),
+])
+def test_get_single_vehicle(vehicles_single, expected):
+    responses.add(responses.GET, ANY_URL, body=vehicles_single, status=200)
+    resp = list(get_vehicles('020'))
+    assert 1 == len(resp)
+    assert expected == resp[0]
 
 
 @responses.activate

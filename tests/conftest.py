@@ -6,9 +6,10 @@ from app.settings import ROOT_DIR
 
 
 FILES = {
-    'vehicles-success': 'tests/data/vehicles-success.xml',
-    'arrivals-success': 'tests/data/arrivals-success.xml',
-    'routes-success': 'tests/data/routes-success.xml',
+    'vehicles-multiple.success': 'tests/data/vehicles-multiple.success.xml',
+    'vehicles-single.success': 'tests/data/vehicles-single.success.xml',
+    'arrivals.success': 'tests/data/arrivals.success.xml',
+    'routes.success': 'tests/data/routes.success.xml',
 }
 
 FIXTURES = {}
@@ -19,15 +20,20 @@ for key, filepath in FILES.items():
 
 
 @pytest.fixture
-def vehicles() -> str:
-    return FIXTURES['vehicles-success']
+def vehicles_multiple() -> str:
+    return FIXTURES['vehicles-multiple.success']
+
+
+@pytest.fixture
+def vehicles_single() -> str:
+    return FIXTURES['vehicles-single.success']
 
 
 @pytest.fixture
 def arrivals() -> str:
-    return FIXTURES['arrivals-success']
+    return FIXTURES['arrivals.success']
 
 
 @pytest.fixture
 def routes() -> str:
-    return FIXTURES['routes-success']
+    return FIXTURES['routes.success']
